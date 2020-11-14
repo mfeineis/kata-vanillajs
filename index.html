@@ -4,74 +4,50 @@
 <head>
     <meta charset="utf-8">
     <title>Kata Vanilla</title>
-    <script src="core.js"></script>
-    <script src="vanilla.js"></script>
 </head>
 
 <body>
+    <div id="root"></div>
+
+    <script src="core.js"></script>
+    <script src="src/vanilla.js"></script>
+    <script src="src/main.js"></script>
+
+    <x-hello></x-hello>
+    <x-counter who="who" what="what" init="42" step="3"></x-counter>
+
+    <script src="harness.js"></script>
+    <script src="tests.js"></script>
+    <pre id="terminal" style="background: #eee; border: 1px solid #888; padding: 10px"></pre>
     <script>
-        class BaseElement extends HTMLElement {
-            constructor() {
-                super();
-                this._root = this.attachShadow({ mode: 'open' });
-                this.props = {};
-            }
-            connectedCallback() {
-                this.__render();
-            }
-            __render() {
-                // const tmpl = $("#x-layout-tmpl")[0].content;
-                // this.appendChild(tmpl.cloneNode(true));
-                // this._root.appendChild(tmpl.cloneNode(true));
-                const node = this.render(this.props);
-                if (node) {
-                    this._root.appendChild(node);
-                }
-            }
-        }
-        customElements.define('x-counter', class extends BaseElement {
-            static get observedAttributes() {
-                return ["count"];
-            }
 
-            attributeChangedCallback(attr, oldValue, rawValue) {
-                let value = rawValue;
-                switch (attr) {
-                    case "count":
-                        value = Number(rawValue);
-                        break;
-                }
-                this.props[attr] = value;
-            }
-
-            render(props) {
-                return H.button({
-                    onClick(e) {
-                        props.count += 1;
-                        $("[data-id=count]", this)[0].innerText = props.count;
-                    }
+        tests({
+            Vanilla,
+        }, createTestHarness(function (utils) {
+            const escapeHtml = utils.escapeHtml;
+            return {
+                flush: function flush(buffer) {
+                    const out = [];
+                    buffer.forEach(function (it) {
+                        const cols = [" "];
+                        for (let i = 1; i < it[0]; i += 1) {
+                            cols.push("  ");
+                        }
+                        const indent = cols.join("");
+                        if (it[3] instanceof Error) {
+                            out.push("\n" + indent + it[1]);
+                            console.error(indent, it[2], it[3]);
+                        } else {
+                            out.push("\n" + indent + it[1]);
+                            console.log(indent, it[2]);
+                        }
+                    });
+                    document.querySelector("#terminal").innerHTML += out.map(escapeHtml).join("");
                 },
-                    `Log ${props.count}! `,
-                    H.span({ "data-id": "count" }, props.count),
-                    // `Log `, () => props.count, `!`,
-                    // H.span(null, () => props.count),
-                );
-            }
-        });
+            };
+        }));
 
     </script>
-
-    <x-counter count="0"></x-counter>
-    <!--
-    <div slot="sidebar">SIDEBAR</div>
-    <div slot="main">MAIN</div>
-    <template id="x-layout-tmpl">
-        <div>
-            <slot name="sidebar"></slot>
-        </div>
-        <slot name="main"></slot>
-    </template>
-    -->
 </body>
 
 </html>
