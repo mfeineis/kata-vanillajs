@@ -59,7 +59,7 @@
                     Core.log("    TEXT_NODE", child);
                     child.textContent.replace(/(__\$gen([\d]+)\$__)/g, (_, tk, i, pos) => {
                         // TODO: Only update the text region where the symbol actually is
-                        const value = exprs[i]();
+                        const value = typeof exprs[i] === "function" ? exprs[i]() : exprs[i];
                         Core.log("      found", tk, i, "@", pos, "<-", value);
                         child.textContent = value;
                         return _;
@@ -93,7 +93,13 @@
         return new Proxy(state, {
             get(target, name) {
                 //Core.log("(get) useState", state, ".", name);
-                return () => target[name];
+                const getter = () => target[name];
+                // Using valueOf to allow easy read access for values
+                getter.valueOf = function () {
+                    // TODO: This might be too much magic
+                    return this();
+                };
+                return getter;
             },
             //set(target, name, value) {
             //    //Core.log("(set) useState", state, ".", name, "=", value);
@@ -124,7 +130,13 @@
                     //src: attr,
                     target: attr,
                     getter(host) {
-                        return () => host.getAttribute(attr);
+                        const getter = () => host.getAttribute(attr);
+                        // Using valueOf to allow easy read access for values
+                        getter.valueOf = function () {
+                            // TODO: This might be too much magic
+                            return this();
+                        };
+                        return getter;
                     },
                     //set(host, value) {
                     //    host.setAttribute(attr, value);
@@ -188,13 +200,12 @@
             <b>${props.who}!</b>
             <button onClick=${onClick}>+ ${props.what}</button>
             <span>${state.count}</span>
+            <span>${state.count + 1}</span>
         `;
     }
 
+    def("x-counter", CounterView, attr("who"), attr("what"));
 
-
-    const Counter = def("x-counter", CounterView, attr("who"), attr("what"));
-
-    const Hello = def("x-hello", () => html`<b>Hello, World!</b>`);
+    def("x-hello", () => html`<b>Hello, World!</b>`);
 
 }());
