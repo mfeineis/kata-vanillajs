@@ -1,6 +1,7 @@
 // * [x] HTML via tagged template literals and DOMParser
 // * [x] Sneaky getters in props and state
 // * [x] With event handling
+// * [x] Support HTMLElement properties
 
 (function (window) {
     "use strict";
@@ -123,10 +124,11 @@
 
     const def = (name, view, ...mixins) => {
         const observedAttributes = [];
+        const properties = {};
         const lensLookup = {};
         const lenses = [];
 
-        for (let { attr } of mixins) {
+        for (let { attr, prop } of mixins) {
             if (attr) {
                 observedAttributes.push(attr);
                 const lens = {
@@ -148,6 +150,32 @@
                 };
                 lenses.push(lens);
                 lensLookup[`a-${attr}`] = lens;
+            }
+            if (prop) {
+                const lens = {
+                    target: prop,
+                    getter(host) {
+                        const value = host[`_p_${prop}`];
+                        Core.log("lens", prop, "getter", value);
+                        return value;
+                    },
+                    setter(host, value) {
+                        Core.log("prop", prop, "setter", value);
+                        const oldValue = host[`_p_${prop}`];
+                        host[`_p_${prop}`] = value;
+                        host._update(`p-${prop}`, value, oldValue);
+                    },
+                };
+                properties[prop] = {
+                    get() {
+                        return lens.getter(this);
+                    },
+                    set(value) {
+                        lens.setter(this, value);
+                    },
+                };
+                lenses.push(lens);
+                lensLookup[`p-${prop}`] = lens;
             }
         }
 
@@ -190,6 +218,8 @@
             }
         }
 
+        Object.defineProperties(Component.prototype, properties);
+
         customElements.define(name, Component);
         return Component;
     };
@@ -198,7 +228,7 @@
 
     function CounterView(props) {
         Core.log("CounterView(", props, ")");
-        const state = useState({ count: 0 });
+        const state = useState({ count: props.init || 0 });
         const onClick = ev => Core.log("ev.target", ev.target);
         return html`
             <b>${props.who}!</b>
@@ -208,7 +238,7 @@
         `;
     }
 
-    def("x-counter", CounterView, attr("who"), attr("what"));
+    def("x-counter", CounterView, attr("who"), attr("what"), prop("init"));
 
     def("x-hello", () => html`<b>Hello, World!</b>`);
 
