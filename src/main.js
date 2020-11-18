@@ -142,9 +142,9 @@
                         };
                         return getter;
                     },
-                    //set(host, value) {
-                    //    host.setAttribute(attr, value);
-                    //}
+                    set(host, value) {
+                        host.setAttribute(attr, value);
+                    },
                 };
                 lenses.push(lens);
                 lensLookup[`a-${attr}`] = lens;
@@ -156,14 +156,14 @@
                 return observedAttributes;
             }
 
-            //_update(name, newValue, oldValue) {
-            //    Core.log("_update", name, newValue, oldValue, this);
-            //    lensLookup[name].set()
-            //}
+            _update(name, newValue, oldValue) {
+                Core.log("    _update", name, newValue, oldValue, this);
+                //lensLookup[name].set()
+            }
 
             attributeChangedCallback(name, newValue, oldValue) {
                 Core.log("  attributeChangedCallback", name, newValue, oldValue, this);
-                //this._update(`a-${name}`, newValue, oldValue);
+                this._update(`a-${name}`, newValue, oldValue);
             }
 
             connectedCallback() {
