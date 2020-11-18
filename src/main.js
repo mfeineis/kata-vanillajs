@@ -2,8 +2,12 @@
 // * [x] Sneaky getters in props and state
 // * [x] With event handling
 
-(function () {
+(function (window) {
     "use strict";
+
+    if (!Object.assign || !("Reflect" in window)) {
+        throw new Error("I need a modern ES2015+ environment.");
+    }
 
     /**
      * @param parts {TemplateStringsArray}
@@ -208,4 +212,4 @@
 
     def("x-hello", () => html`<b>Hello, World!</b>`);
 
-}());
+}(self));
